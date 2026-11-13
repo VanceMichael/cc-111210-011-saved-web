@@ -17,8 +17,10 @@ npm start
 
 ## 接口与模块
 
-`GET /health` 查看状态，`GET /inspect` 查看来源，`GET /receive?key=sample` 保存单次接收，`GET /receipts/sample` 读取回执。相同key和相同内容可重复接收，不同内容拒绝覆盖。
+`GET /health` 查看状态，`GET /inspect` 查看来源并返回可追溯采集结果，`GET /receive?key=sample` 保存单次接收，`GET /receipts/sample` 读取回执。相同key和相同内容可重复接收，不同内容拒绝覆盖；依赖不闭合或存在歧义的包不会被接收，接口返回409与诊断。
 
-`src/connector.mjs` 解释单次来源响应，`fixtures/source.mjs` 提供可重复启动的本地来源，`src/service.mjs` 组织访问入口，`src/store.mjs` 保存查看结果。`test/connector.test.mjs` 验证协议原语和演练源，`test/service.test.mjs` 验证服务与留存边界。
+`/inspect` 与 `/receive` 接受 `kind`（`normal`、`truncated`、`nested`、`cycles`、`clean`）以及 `maxBytes`、`maxParts`、`maxDepth`、`maxDocumentChars`、`maxPreviewBytes` 等上限参数。超过字节上限的包在读取时即被拒绝，不写入回执。
+
+`src/connector.mjs` 读取单次来源响应并组织采集结果，`src/mime.mjs` 解析 MIME 头、多部分边界、嵌套边界、转移编码与字符编码，`src/capture.mjs` 选定根文档、建立引用图并判定可用性，`fixtures/source.mjs` 提供可重复启动的本地来源，`src/service.mjs` 组织访问入口，`src/store.mjs` 保存查看结果。`test/connector.test.mjs` 验证协议原语、解析边界与引用图，`test/service.test.mjs` 验证服务与留存边界。
 
 生产接入地址与凭据需由部署配置给出；演练客户端拒绝访问回环以外的地址。文档中的接口不向外提供任意目标代理。异常以明确错误响应返回，接收失败不覆盖原回执。

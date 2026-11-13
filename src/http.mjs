@@ -28,10 +28,10 @@ export async function listen(handler, port = 0) {
   };
 }
 
-export async function get(base, path) {
+export async function get(base, path, options = {}) {
   const url = new URL(path, base);
   if (!['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)) throw new Error('演练源只允许本地地址');
-  const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+  const response = await fetch(url, { signal: AbortSignal.timeout(options.timeoutMs ?? 5000) });
   if (!response.ok) throw new Error(`来源返回 ${response.status}`);
   return response;
 }
